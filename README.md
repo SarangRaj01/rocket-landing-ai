@@ -9,9 +9,7 @@
 [![PPO RL](https://img.shields.io/badge/RL_Algorithm-PPO_Continuous-00FF66?style=for-the-badge)](https://spinningup.openai.com/en/latest/algorithms/ppo.html)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-**An interactive 3D Web application where an AI agent learns to balance an upright rocket and perform safe, autonomous landings on a circular pad using continuous Proximal Policy Optimization (PPO) reinforcement learning.**
-
-[Features](#-key-features) • [Quickstart](#-quickstart) • [How It Works](#-how-it-works) • [Physics & RL](#-physics--reinforcement-learning-math) • [Controls](#-mission-control--keybindings)
+### **An interactive 3D Web application where an AI agent learns to balance and land a rocket using continuous Proximal Policy Optimization (PPO) reinforcement learning.**
 
 </div>
 
@@ -19,21 +17,21 @@
 
 ## 🎬 Demo & Video Preview
 
-> **Record your own demo with 1-click**: The simulator includes a built-in **`REC DEMO`** button in the top navigation bar that records crystal-clear 60FPS video directly from the WebGL canvas and saves a ready-to-share `.webm` file!
+> **Record your own demo with 1-click**: The simulator includes a built-in **`REC DEMO`** button in the top navigation bar that records crystal-clear 60FPS video directly from the WebGL canvas and saves a ready-to-share `.webm` video file!
 
-```
-               ▲ [Rocket Altitude: 15m]
+```text
+               ▲ [Altitude: 15m]
               / \
-             | O |  <-- Blue Observation Porthole
-             |===|  <-- Checkered Livery
+             | O |   <-- Blue Observation Porthole
+             |===|   <-- Checkered Livery Band
              |   |
-             /| |\  <-- Articulated Landing Legs
+             /| |\   <-- Articulated Landing Struts
             / |_| \
            *   |   * <-- Side RCS Thrusters
-              ( )   <-- Main Engine Exhaust Flame
+              ( )    <-- Main Engine Exhaust Flame
                v
      ═════════════════════
-     ( ( ( [PAD (+)] ) ) )  <-- Circular Concrete Landing Target
+     ( ( ( [PAD (+)] ) ) )   <-- Circular Concrete Landing Target
 ```
 
 ---
@@ -41,27 +39,33 @@
 ## ✨ Key Features
 
 - **Genuine Reinforcement Learning (PPO)**:
-  - Real actor-critic neural networks running in TypeScript/WASM.
+  - Real Actor-Critic neural networks running in TypeScript/WASM.
   - Continuous Gaussian action policy with Generalized Advantage Estimation (GAE) and clipped surrogate loss.
   - No scripted movements, no pre-baked animations — the rocket genuinely learns through physical trial and error.
+
 - **Deterministic 60Hz Physics (Rapier 3D WASM)**:
-  - True rigid-body mass ($1000\,\text{kg}$), moment of inertia, gravity ($g = -9.81\,\text{m/s}^2$), thrust vectoring (up to $2.44\times$ TWR), and local frame RCS torques.
+  - True rigid-body mass (1000 kg), moment of inertia, gravity (-9.81 m/s²), thrust vectoring (up to 2.44x TWR), and local frame RCS torques.
   - Multi-collider landing legs with four distinct footpads, contact manifolds, friction, and bounce restitution.
+
 - **High-Fidelity 3D Visual Experience**:
   - Custom 3D rocket model featuring white aerodynamic hull, rounded nosecone, checkered band, blue observation porthole, and articulated hydraulic landing struts.
   - Dynamic flame plumes: Bright cyan core, outer orange flame cone, and dynamic real-time ground illumination.
   - Circular concrete pad with concentric target rings, segmented yellow hazard stripes, runway boundary lights, and safety traffic cone.
   - Prominent 3D digital scoreboard with steel stanchions, green LED score typography, and horizontal neon accent line.
   - Atmospheric sunset twilight sky with warm directional lighting and background aerospace operations facility.
+
 - **Telemetry HUD & Outcome Detection**:
-  - Real-time digital meters: Altitude (AGL), vertical velocity ($v_y$), horizontal drift speed, tilt angle, throttle %, and fuel remaining.
-  - Precise landing validation: Touchdown requires tilt $< 12^\circ$, descent speed $< 1.8\,\text{m/s}$, drift $< 1.0\,\text{m/s}$, and remaining settled continuously for $\ge 25$ frames.
+  - Real-time digital meters: Altitude (AGL), vertical velocity, horizontal drift speed, tilt angle, throttle %, and fuel remaining.
+  - Precise landing validation: Touchdown requires tilt < 12°, descent speed < 1.8 m/s, drift < 1.0 m/s, and remaining settled continuously for at least 25 frames.
+
 - **Analytics & Debugger**:
   - Built-in **Recharts** dashboard tracking Episode Reward vs. 10-episode Moving Average (SMA), touchdown velocity, and tilt history.
   - Step reward decomposition inspector showing individual reward components in real time.
+
 - **Model Persistence**:
   - Export and import neural network weights as standard `.json` checkpoints.
   - Includes a verified **Pretrained Master Agent** checkpoint for instant demonstration.
+
 - **Built-in 60FPS Video Recorder**:
   - Export crisp demo videos directly from your browser without third-party software.
 
@@ -98,36 +102,51 @@ npm run preview
 
 ---
 
-## 🔬 Physics & Reinforcement Learning Math
+## 🔬 Physics & Reinforcement Learning Formulation
 
-### 1. Observation Vector $\mathbf{s} \in \mathbb{R}^{15}$
-The agent observes its full state in the world frame normalized for neural network stability:
-$$\mathbf{s} = \begin{bmatrix} \frac{x}{10}, & \frac{y - 1.25}{15}, & \frac{z}{10}, & \frac{v_x}{10}, & \frac{v_y}{10}, & \frac{v_z}{10}, & \sin(\theta_p), & \cos(\theta_p), & \sin(\theta_r), & \cos(\theta_r), & \frac{\omega_x}{5}, & \frac{\omega_y}{5}, & \frac{\omega_z}{5}, & c_{\text{pad}}, & \frac{d_{\text{pad}}}{10} \end{bmatrix}^T$$
+### 1. Observation Vector (15 Dimensions)
+The agent observes normalized kinematics in the world and body frame:
 
-### 2. Action Vector $\mathbf{a} \in \mathbb{R}^3$
-- **$a_0 \in [0, 1]$**: Main thruster throttle applied along the rocket's local $+Y$ axis:
-  $$\vec{F}_{\text{main}} = a_0 \cdot F_{\text{max}} \cdot \mathbf{R} \begin{bmatrix} 0 \\ 1 \\ 0 \end{bmatrix}$$
-- **$a_1 \in [-1, 1]$**: Pitch RCS torque applied along local $X$ axis.
-- **$a_2 \in [-1, 1]$**: Roll RCS torque applied along local $Z$ axis.
+| Index | Variable | Description | Range |
+| :--- | :--- | :--- | :--- |
+| `0` | `relX` | X Position relative to pad center | [-1.5, 1.5] |
+| `1` | `relY` | Altitude above landing pad | [0.0, 1.5] |
+| `2` | `relZ` | Z Position relative to pad center | [-1.5, 1.5] |
+| `3-5` | `vx, vy, vz` | Linear velocities in X, Y, Z | [-1.0, 1.0] |
+| `6-7` | `sinPitch, cosPitch` | Pitch angle orientation | [-1.0, 1.0] |
+| `8-9` | `sinRoll, cosRoll` | Roll angle orientation | [-1.0, 1.0] |
+| `10-12` | `angVelX, Y, Z` | Pitch, Yaw, Roll angular rates | [-1.0, 1.0] |
+| `13` | `contactState` | Ground / Pad contact indicator | {0, 1} |
+| `14` | `distanceToPad` | Distance to pad center target | [0.0, 2.0] |
 
-### 3. PPO Clipped Objective
-The policy network parameters $\theta$ are updated by maximizing the clipped surrogate objective:
-$$L^{\text{CLIP}}(\theta) = \hat{\mathbb{E}}_t \left[ \min\left(r_t(\theta) \hat{A}_t, \, \text{clip}(r_t(\theta), 1 - \epsilon, 1 + \epsilon) \hat{A}_t\right) \right]$$
-where:
-$$r_t(\theta) = \frac{\pi_\theta(a_t | s_t)}{\pi_{\theta_{\text{old}}}(a_t | s_t)}, \quad \epsilon = 0.2$$
+### 2. Action Vector (3 Continuous Actuators)
 
-### 4. Transparent Reward Function
-$$R_{\text{step}} = R_{\text{upright}} + R_{\text{dist}} + R_{\text{ang}} + R_{\text{drift}} + R_{\text{descent}} + R_{\text{proximity}} + R_{\text{fuel}} + R_{\text{terminal}}$$
+- **`a0` (Throttle)**: Main thruster throttle in `[0, 1]` applied along local +Y axis (up to 24,000 N force).
+- **`a1` (Pitch Torque)**: Pitch attitude RCS torque in `[-1, 1]` (up to 5,500 N·m).
+- **`a2` (Roll Torque)**: Roll attitude RCS torque in `[-1, 1]` (up to 5,500 N·m).
 
-| Component | Formula | Objective |
+### 3. PPO Clipped Surrogate Loss
+
+The policy parameters are optimized using the clipped surrogate objective:
+
+```
+L_CLIP(θ) = E [ min( r_t(θ) * A_t,  clip(r_t(θ), 1 - ε, 1 + ε) * A_t ) ]
+```
+
+where the probability ratio is `r_t(θ) = π_θ(a_t | s_t) / π_old(a_t | s_t)` and `ε = 0.2`.
+
+### 4. Reward Function Breakdown
+
+| Component | Shaping Formula | Objective |
 | :--- | :--- | :--- |
-| **Upright Alignment** | $+0.6 \cdot \cos(\theta_{\text{tilt}})$ | Keep rocket perfectly vertical |
-| **Pad Proximity** | $-0.08 \cdot \sqrt{x^2 + z^2}$ | Penalize drifting away from target |
-| **Angular Velocity** | $-0.06 \cdot \|\vec{\omega}\|^2$ | Prevent spinning and oscillations |
-| **Horizontal Drift** | $-0.12 \cdot (v_x^2 + v_z^2)$ | Arrest horizontal momentum |
-| **Descent Shaping** | $-0.08 \cdot |v_y - v_{\text{target}}(y)|$ | Encourage soft descent ($0.8$–$1.8\,\text{m/s}$) |
-| **Terminal Landing** | $+220 \text{ base} + 50 \text{ accuracy} + 30 \text{ softness}$ | Huge reward for safe upright touchdown |
-| **Terminal Crash** | $-120$ | Heavy penalty for high impact ($>3.8\,\text{m/s}$) or tilt ($>42^\circ$) |
+| **Upright Alignment** | `+0.6 * cos(tiltAngle)` | Keep rocket strictly vertical |
+| **Pad Proximity** | `-0.08 * distanceToPad` | Guide rocket toward center |
+| **Angular Rate** | `-0.06 * ||angVel||²` | Eliminate spinning and oscillation |
+| **Horizontal Drift** | `-0.12 * (vx² + vz²)` | Arrest lateral drift speed |
+| **Descent Shaping** | `-0.08 * |vy - targetVy|` | Maintain controlled deceleration |
+| **Ground Bonus** | `+0.5 * proximity` | Reward stability near the ground |
+| **Successful Landing** | `+220 base + 50 accuracy + 30 softness` | Terminal touchdown reward |
+| **Crash Penalty** | `-120` | Penalty for hard impact or tipping over |
 
 ---
 
@@ -137,19 +156,19 @@ $$R_{\text{step}} = R_{\text{upright}} + R_{\text{dist}} + R_{\text{ang}} + R_{\
 | :--- | :--- | :--- |
 | **PAUSE / RESUME** | Freeze Physics | Pause or resume real-time physics and training |
 | **TRAINING MODE** | Stochastic Policy | Policy explores with Gaussian noise and updates weights |
-| **EVALUATION MODE** | Deterministic Policy | Policy executes mean action ($\sigma = 0$) with frozen weights |
+| **EVALUATION MODE** | Deterministic Policy | Policy executes mean action (σ = 0) with frozen weights |
 | **0.5x – 10x SPEED** | Physics Time Scale | Accelerate physics simulation for rapid training |
 | **PRETRAINED** | Load Master Model | Instantly load a 1,250-episode trained agent (~94% success rate) |
 | **REC DEMO** | Canvas Recorder | Capture 60FPS video directly to `.webm` file |
 | **WIND DISTURBANCE** | Weather Simulator | Apply dynamic horizontal wind gusts (0–100%) |
-| **MOTION TRAIL** | 3D Flight Ribbon | Display rocket's spatial flight path |
+| **MOTION TRAIL** | 3D Flight Ribbon | Display rocket spatial flight path |
 | **SAVE / LOAD** | Model Checkpoints | Download or upload neural network weights as `.json` |
 
 ---
 
 ## 📁 Repository Structure
 
-```
+```text
 rocket-landing-ai/
 ├── public/
 ├── src/
@@ -196,5 +215,3 @@ rocket-landing-ai/
 ## 📜 License
 
 Distributed under the **MIT License**. See `LICENSE` for more information.
-#   r o c k e t - l a n d i n g - a i  
- 
