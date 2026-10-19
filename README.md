@@ -17,22 +17,24 @@
 
 ## 🎬 Demo & Video Preview
 
-> **Record your own demo with 1-click**: The simulator includes a built-in **`REC DEMO`** button in the top navigation bar that records crystal-clear 60FPS video directly from the WebGL canvas and saves a ready-to-share `.webm` video file!
+<div align="center">
 
-```text
-               ▲ [Altitude: 15m]
-              / \
-             | O |   <-- Blue Observation Porthole
-             |===|   <-- Checkered Livery Band
-             |   |
-             /| |\   <-- Articulated Landing Struts
-            / |_| \
-           *   |   * <-- Side RCS Thrusters
-              ( )    <-- Main Engine Exhaust Flame
-               v
-     ═════════════════════
-     ( ( ( [PAD (+)] ) ) )   <-- Circular Concrete Landing Target
-```
+<!--
+  Setup: put demo.mp4 and demo.gif in the assets/ folder of your repo.
+  Replace YOUR-USERNAME below with your GitHub username.
+-->
+
+<video src="https://github.com/YOUR-USERNAME/rocket-landing-ai/raw/main/assets/demo.mp4" controls muted loop width="100%">
+  <a href="assets/demo.mp4">
+    <img src="assets/demo.gif" alt="Rocket Landing AI demo" width="100%">
+  </a>
+</video>
+
+*The AI agent descending and landing the rocket on the target pad (click to play).*
+
+</div>
+
+> **Record your own demo with 1-click**: The simulator includes a built-in **`REC DEMO`** button in the top navigation bar that records crystal-clear 60FPS video directly from the WebGL canvas and saves a ready-to-share `.webm` video file!
 
 ---
 
@@ -170,6 +172,9 @@ where the probability ratio is `r_t(θ) = π_θ(a_t | s_t) / π_old(a_t | s_t)` 
 
 ```text
 rocket-landing-ai/
+├── assets/
+│   ├── demo.mp4                       # Demo video (README)
+│   └── demo.gif                       # Demo preview fallback
 ├── public/
 ├── src/
 │   ├── components/
